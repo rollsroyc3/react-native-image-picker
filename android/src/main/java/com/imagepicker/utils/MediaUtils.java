@@ -10,6 +10,7 @@ import android.net.Uri;
 import android.os.Environment;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 
 import com.facebook.react.bridge.ReadableMap;
@@ -45,17 +46,31 @@ public class MediaUtils
                 .append(".jpg")
                 .toString();
 
-        final File path = ReadableMapUtils.hasAndNotNullReadableMap(options, "storageOptions")
-                && ReadableMapUtils.hasAndNotEmptyString(options.getMap("storageOptions"), "path")
-                ? new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), options.getMap("storageOptions").getString("path"))
-                : (!forceLocal ? Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-                              : reactContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+        
+        // https://github.com/react-native-community/react-native-image-picker/pull/1063/files?file-filters%5B%5D=.java
+        File storageDirectory;
+        final String storageSubdirectory = null;
+        final String cacheDirectory = reactContext.getCacheDir().getAbsolutePath();
 
-        File result = new File(path, filename);
+        if (!TextUtils.isEmpty(storageSubdirectory)) {
+            storageDirectory = new File(cacheDirectory, storageSubdirectory);
+        } else {
+            storageDirectory = new File(cacheDirectory);
+        }
+
+        File result = new File(storageDirectory, filename);
+        
+        //         final File path = ReadableMapUtils.hasAndNotNullReadableMap(options, "storageOptions")
+        //                 && ReadableMapUtils.hasAndNotEmptyString(options.getMap("storageOptions"), "path")
+        //                 ? new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), options.getMap("storageOptions").getString("path"))
+        //                 : (!forceLocal ? Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
+        //                               : reactContext.getExternalFilesDir(Environment.DIRECTORY_PICTURES));
+
+        //         File result = new File(path, filename);
 
         try
         {
-            path.mkdirs();
+            storageDirectory.mkdirs();
             result.createNewFile();
         }
         catch (IOException e)
